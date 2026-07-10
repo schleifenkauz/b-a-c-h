@@ -1,9 +1,11 @@
 let planet_layer;
 let main_layer;
-
-const H = 1600; const W = 1600;
+let interactive_layer;
 
 function setup() {
+    const mobile = windowWidth < 600;
+    const H = mobile ? 600 : 1600; 
+    const W = mobile ? 600 : 1600;
     createCanvas(H, W);
     main_layer = createGraphics(H, W);
     planet_layer = createGraphics(H, W);
@@ -76,7 +78,7 @@ const clef_dx = points[points.length - 1].x - points[0].x;
 const clef_dy = points[points.length - 1].y - points[0].y;
 const planet_speed = 0.5;
 
-let t = 0;
+let t = 0; let frame_rate = 60;
 
 let links = [];
 
@@ -119,7 +121,7 @@ function draw() {
         background('white');
         translate(width / 2, 500);
         rotate(PI / 12 * min(1, t / 50.0))
-        ellipse(0, 0, t / 15, t / 15 - min(4, t / 50.0));
+        ellipse(0, 0, t / 15, t / 15 - min(4, t / 50.0)); //TODO make it the color of the first planet
         return;
     }
 
@@ -138,6 +140,7 @@ function draw() {
         main_layer.translate(width / 2 + o.start_x, o.start_y + 500);
         if (o.depth == 1 && o.text_drawn == false) {
             main_layer.noStroke();
+            main_layer.strokeWeight(2)
             main_layer.text(o.name, 25, 0);
             o.text_drawn = true;
             links.push({name: o.name, url: o.url, x: width / 2 + o.start_x + 50, y: o.start_y + 500 - 10})
@@ -225,7 +228,7 @@ function draw() {
         } else {
             planets.delete(o);
         }
-        planet_layer.noStroke();
+        planet_layer.noStroke(); //TODO make planets look like noteheads, maybe at a stem
         planet_layer.fill(o.color[0], o.color[1], o.color[2]);
         planet_layer.ellipse(o.x, o.y, o.size, o.size);
         planet_layer.pop();
@@ -235,6 +238,12 @@ function draw() {
         add_planet();    
     }
 
+    if (t % 60 == 0) {
+        frame_rate = frameRate();
+    }
+
+    planet_layer.textFont("EB Garamond"); planet_layer.textSize(20);
+    planet_layer.text(frame_rate.toFixed(1) + " FPS", width / 2, 200)
     image(main_layer, 0, 0);
     image(planet_layer, 0, 0);
     image(interactive_layer, 0, 0);
