@@ -1,0 +1,14 @@
+{
+  "name": "b-a-c-h",
+  "version": "1.0.0",
+  "description": "Website for Cornelia",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Nikolaus Knop",
+  "license": "ISC",
+  "dependencies": {
+    "svg-path-properties": "^2.0.2"
+  }
+}
