@@ -64,29 +64,31 @@ let current = new Set([{
 
 let planets = new Set([]);
 let last_spawn_time = 0; 
-const spawn_interval = 3000;
+const spawn_interval = 8000;
 const planet_speed = 0.5;
 const notehead_size = 12;
 const notehead_rotation = -PI / 8;
-const planet_apperance_dur = 300;
+const planet_spawn_time = 300;
 add_planet([256, 256, 128]);
 
 const spawn_angles = [
-    { angle: 2.75 * PI, rotate: 0, name: "Concert lectures" },
-    { angle: 3.25 * PI, rotate: PI / 2, name: "Coaching" },
-    { angle: 3.75 * PI, rotate: PI, name: "Klavierunterricht" },
-    { angle: 4.25 * PI, rotate: -PI / 2, name: "Konzept" }
+    { angle: 2.75 * PI, rotate: 0, name: "Concert lectures" }, //Concert Lectures: 
+    { angle: 3.25 * PI, rotate: PI / 2, name: "Unterricht" }, //Unterpunkte: Coaching, Instrumentalunterricht 
+    { angle: 3.75 * PI, rotate: PI, name: "Lehre" }, //Vorlesungen, Seminare
+    { angle: 4.25 * PI, rotate: -PI / 2, name: "Fundament" } //
 ]
 
 const clef_dx = points[points.length - 1].x - points[0].x;
 const clef_dy = points[points.length - 1].y - points[0].y;
 
+const DEPTH = 3;
+
 let t = 0; let frame_rate = 60;
 
 let links = [];
 
-const LINK_RADIUS = 300;
-const LABEL_DISPLACEMENT = 85;
+const LINK_RADIUS = 270;
+const LABEL_DISPLACEMENT = 60;
 
 function dist(cx, cy, x, y) {
     const dx = x - cx;
@@ -101,14 +103,14 @@ function mouseMoved() {
         if (d < LINK_RADIUS / 2) {
             interactive_layer.fill(0, 0, 0, 20);
             interactive_layer.noStroke();
-            interactive_layer.ellipse(link.x + 100, link.y - 10, LINK_RADIUS, LINK_RADIUS);
+            interactive_layer.ellipse(link.x, link.y - 10, LINK_RADIUS, LINK_RADIUS);
             interactive_layer.fill('blue');
-            interactive_layer.text(link.name, link.x + LABEL_DISPLACEMENT, link.y);
+            interactive_layer.text(link.name, link.x - link.name.length * 5, link.y + LABEL_DISPLACEMENT);
 
             interactive_layer.stroke('black');
             for (let i = -3; i <= 1; i++) {
                 const y = link.y + i * 16;
-                interactive_layer.line(link.x - 28, y, link.x + 80, y);
+                interactive_layer.line(link.x - 80, y, link.x + 80, y);
             }
         }
     })
@@ -137,19 +139,20 @@ function draw() {
         }
     }
 
-    if (t >= 200) {
+    if (t >= planet_spawn_time) {
         current.forEach((o) => {
             main_layer.push();
             main_layer.translate(width / 2 + o.start_x, o.start_y + 500);
             if (o.depth == 1 && o.text_drawn == false) {
                 main_layer.noStroke();
                 main_layer.strokeWeight(2)
-                main_layer.text(o.name, LABEL_DISPLACEMENT, 0);
+                main_layer.text(o.name, -o.name.length * 5, LABEL_DISPLACEMENT);
                 o.text_drawn = true;
                 links.push({name: o.name, url: o.url, x: width / 2 + o.start_x, y: o.start_y + 500})
             }
             //rotate(o.rotate);
-            main_layer.stroke(o.hue + (255 - o.saturation), (255 - o.hue) + (255 - o.saturation), 255 - o.saturation, o.opacity);
+            main_layer.stroke(0, 0, 0, o.opacity);
+            //main_layer.stroke(o.hue + (255 - o.saturation), (255 - o.hue) + (255 - o.saturation), 255 - o.saturation, o.opacity);
             o.hue = clamp(o.hue + rand2(10) + 0.06, 50, 180);
             o.saturation = clamp(o.saturation + rand2(10) + 0.05, 100, 255);
             if (o.i < points.length && o.opacity > 0) {
@@ -172,17 +175,17 @@ function draw() {
                 r = o.radius;
                 const new_x = r * cos(o.angle);
                 const new_y = r * sin(o.angle);
-                o.spiral_width = clamp(o.spiral_width + rand2(1), 1, 8);
+                o.spiral_width = clamp(o.spiral_width + rand2(1), 2, 8);
                 main_layer.strokeWeight(o.spiral_width * o.scale);
                 main_layer.line(prev_x + o.x, prev_y + o.y - o.initial_radius, new_x + o.x, new_y + o.y - o.initial_radius);
                 o.opacity = o.opacity + o.d_opacity * global_speed;
 
                 spawn_angles.forEach((spawn_angle, idx) => {
-                    if (!o.removed_indices.includes(idx) && Math.abs(spawn_angle.angle - o.angle) <= d_angle * o.step * global_speed / 2 && o.scale > (0.5 ** 6)) {
+                    if (!o.removed_indices.includes(idx) && Math.abs(spawn_angle.angle - o.angle) <= d_angle * o.step * global_speed / 2 && o.scale > (0.5 ** DEPTH)) {
                         current.add({
                             start_x: o.x + new_x + o.start_x, start_y: o.start_y + new_y + o.y - o.initial_radius,
                             initial_radius: o.initial_radius / 2,
-                            x: 0, y: 0, scale: o.scale / 2.0, angle: PI / 2, radius: o.initial_radius / 2, i: 1,
+                            x: 0, y: 0, scale: o.scale / 2, angle: PI / 2, radius: o.initial_radius / 2, i: 1,
                             radius_pow: o.radius_pow + 0.25,
                             d_opacity: -0.6 * o.scale, start_opacity: o.start_opacity / 2, opacity: o.start_opacity / 2,
                             step: o.step + 2, clef_step: o.clef_step + 2, depth: o.depth + 1,
@@ -207,7 +210,7 @@ function draw() {
         planet_layer.push();
         planet_layer.translate(width / 2 + o.start_x, o.start_y + 500);
         if (o.i < 0) {
-            const p = (o.i + planet_apperance_dur) / planet_apperance_dur;
+            const p = (o.i + planet_spawn_time) / planet_spawn_time;
             o.rotation = notehead_rotation * p;
             o.size = p * notehead_size;
             o.squish = 1 - (p * 0.25);
@@ -224,8 +227,8 @@ function draw() {
             o.x = o.radius * cos(o.angle) + (clef_dx * o.scale);
             o.y = o.radius * sin(o.angle) + (clef_dy * o.scale) - o.initial_radius;  
             spawn_angles.forEach((spawn_angle) => {
-                if (Math.abs(spawn_angle.angle - o.angle) <= d_angle * planet_speed * global_speed / 2 && o.scale > (0.5 ** 6) && Math.random() < 0.25) {
-                    console.log("spawning");
+                if (Math.abs(spawn_angle.angle - o.angle) <= d_angle * planet_speed * global_speed / 2 && o.scale > (0.5 ** DEPTH) && Math.random() < 0.25) {
+                    //console.log("spawning");
                     planets.add({
                         start_x: o.x + o.start_x, start_y: o.start_y + o.y,
                         initial_radius: o.initial_radius / 2,
@@ -239,8 +242,10 @@ function draw() {
         } else {
             planets.delete(o);
         }
-        planet_layer.stroke(o.color[0], o.color[1], o.color[2]);
-        planet_layer.fill(o.color[0], o.color[1], o.color[2]);
+        planet_layer.stroke(0, 0, 0);
+        //planet_layer.stroke(o.color[0], o.color[1], o.color[2]);
+        planet_layer.fill(0, 0, 0);
+        //planet_layer.fill(o.color[0], o.color[1], o.color[2]);
         planet_layer.translate(o.x, o.y);
         const stem_h = clamp(o.i / 10, 0, 33);
         //planet_layer.rotate(o.rotate);
@@ -250,7 +255,7 @@ function draw() {
         planet_layer.pop();
     });
 
-    if (Math.random() < 0.005 && Date.now() - last_spawn_time >= spawn_interval) {
+    if (Math.random() < 0.002 && Date.now() - last_spawn_time >= spawn_interval) {
         add_planet();
     }
 
@@ -274,10 +279,43 @@ function add_planet(color) {
     last_planet_color = color;
     last_spawn_time = Date.now();
     planets.add({
-        i: -planet_apperance_dur, start_x: 0, start_y: 0, x: 0, y: 0,
+        i: -planet_spawn_time, start_x: 0, start_y: 0, x: 0, y: 0,
         scale: 1, radius: 100, initial_radius: 100, angle: PI / 2,
         depth: 0, rotate: 0, squish: 1,
         hue: 128, saturation: 128, step: 1, radius_pow: 0,
         color: last_planet_color
     })
 }
+
+/*
+
+- bezug zum klavier???
+- die linie könnte nach unten zurück kommen
+- schwarze tasten in den notenlinien
+- farben: schwarz/bunt?
+- symmetrisch/asymmetrisch - kein dazwischen?
+- am anfang: rosa, licht durch haut
+- urknall am anfang vor dem punkt
+
+- unruhig, weniger planeten, weniger fraktal-ebenen
+- "Fundament" in der Mitte
+- immer wenn ein Notenkopf durch eine Notenlinie geht, kommt eine Note von B-A-C-H dazu
+- B-A-C-H
+- letzte Spiralwindung in den Boden
+- Omega als Kuppel
+
+- 3-Menü Punkte + Basis 
+- scrollen => Menü wird kleiner, Inhalte erscheinen
+
+- Zusammenhang mit Mathematik in den Vordergrund rücken
+
+- sixtinische kapelle im hintergrund, den rest schwarz
+
+- Klavier tasten an beiden Seiten
+
+- weniger herunterskalieren pro ebene => mehr überlappungen
+
+- f(x) = A => f'(x) = 0 -> omega
+
+- bassschlüssel - in den noteschlüssel zurück kehren. 
+*/
