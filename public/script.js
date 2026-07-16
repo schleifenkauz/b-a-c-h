@@ -299,7 +299,7 @@ function draw() {
     }
      
     planet_layer.clear();
-    planet_layer.text(frame_rate.toFixed(1) + " FPS", width / 2, 200)
+    //planet_layer.text(frame_rate.toFixed(1) + " FPS", width / 2, 200)
 
     planets.forEach((o) => {
         planet_layer.push();
