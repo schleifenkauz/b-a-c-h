@@ -1,8 +1,10 @@
-let planet_layer;
-let main_layer;
-let interactive_layer;
+let planet_layer, main_layer, interactive_layer, text_layer;
+let natural, flat;
 
 function setup() {
+    natural = loadImage("res/natural.png");
+    flat = loadImage("res/flat.png");
+
     const mobile = windowWidth < 600;
     const H = mobile ? 600 : 1600; 
     const W = mobile ? 600 : 1600;
@@ -10,10 +12,13 @@ function setup() {
     main_layer = createGraphics(H, W);
     planet_layer = createGraphics(H, W);
     interactive_layer = createGraphics(H, W);
+    text_layer = createGraphics(H, W);
+    text_layer.fill('black');
+    text_layer.noStroke();
     planet_layer.noStroke();
-    [main_layer, interactive_layer, planet_layer].forEach((layer) => {
+    [main_layer, interactive_layer, planet_layer, text_layer].forEach((layer) => {
         layer.textFont("EB Garamond")
-        layer.textSize(24); main_layer.textStyle('regular'); 
+        layer.textSize(28);  
     })
 }
 
@@ -33,10 +38,14 @@ function interpolate(samples, t) {
     }
 }
 
+
+const ORIGIN_Y = 500;
+
 const PI = 3.14159;
 const d_radius = 0.5;
 const d_angle = 0.02;
-const global_speed = 3;
+const global_speed = 5;
+const COLORFUL = false;
 
 function clamp(n, min, max) {
     if (n > max) return max;
@@ -72,10 +81,10 @@ const planet_spawn_time = 300;
 add_planet([256, 256, 128]);
 
 const spawn_angles = [
-    { angle: 2.75 * PI, rotate: 0, name: "Concert lectures" }, //Concert Lectures: 
-    { angle: 3.25 * PI, rotate: PI / 2, name: "Unterricht" }, //Unterpunkte: Coaching, Instrumentalunterricht 
-    { angle: 3.75 * PI, rotate: PI, name: "Lehre" }, //Vorlesungen, Seminare
-    { angle: 4.25 * PI, rotate: -PI / 2, name: "Fundament" } //
+    { angle: 2.75 * PI, rotate: 0, name: "Concert lectures", offset_y: 60 }, //Concert Lectures: 
+    { angle: 3.25 * PI, rotate: PI / 2, name: "Unterricht", offset_y: -60 }, //Unterpunkte: Coaching, Instrumentalunterricht 
+    { angle: 3.75 * PI, rotate: PI, name: "Lehre", offset_y: -60 }, //Vorlesungen, Seminare
+    { angle: 4.25 * PI, rotate: -PI / 2, name: "Fundament", offset_y: 60 } //
 ]
 
 const clef_dx = points[points.length - 1].x - points[0].x;
@@ -88,7 +97,13 @@ let t = 0; let frame_rate = 60;
 let links = [];
 
 const LINK_RADIUS = 270;
-const LABEL_DISPLACEMENT = 60;
+
+const BACH = [
+    {angle: PI, y: -14, text: "A"}, 
+    {angle: 2*PI, y: -42, accidental: null, text: "Complete"}, 
+    {angle: 3*PI, y: -28, accidental: null, accidental: () => flat, scale: 0.12, offset_y: -10, offset_x: 18, text: "Be"}, 
+    {angle: 4*PI, y: -28, accidental: () => natural, scale: 0.05, offset_y: 0, offset_x: -12, text: "Human"}
+];
 
 function dist(cx, cy, x, y) {
     const dx = x - cx;
@@ -105,7 +120,9 @@ function mouseMoved() {
             interactive_layer.noStroke();
             interactive_layer.ellipse(link.x, link.y - 10, LINK_RADIUS, LINK_RADIUS);
             interactive_layer.fill('blue');
-            interactive_layer.text(link.name, link.x - link.name.length * 5, link.y + LABEL_DISPLACEMENT);
+            interactive_layer.textSize(30);
+            const x = link.x - interactive_layer.textWidth(link.name) / 2 + 4;
+            interactive_layer.text(link.name, x, link.y + link.offset_y);
 
             interactive_layer.stroke('black');
             for (let i = -3; i <= 1; i++) {
@@ -132,9 +149,9 @@ function draw() {
     const alpha = ((t - 200) / 100) ** 3 + 2;
     if (t % 10 == 0 && alpha < 256) {
         main_layer.strokeWeight(2.5);
-        for (let i = 0; i < 5; i++) {
+        for (let i = -3; i <= 1; i++) {
             main_layer.stroke(0, 0, 0, alpha);
-            const y = 405 + i * 32;
+            const y = ORIGIN_Y + i * 28;
             main_layer.line(0, y, width, y);
         }
     }
@@ -142,17 +159,22 @@ function draw() {
     if (t >= planet_spawn_time) {
         current.forEach((o) => {
             main_layer.push();
-            main_layer.translate(width / 2 + o.start_x, o.start_y + 500);
+            main_layer.translate(width / 2 + o.start_x, o.start_y + ORIGIN_Y);
             if (o.depth == 1 && o.text_drawn == false) {
-                main_layer.noStroke();
-                main_layer.strokeWeight(2)
-                main_layer.text(o.name, -o.name.length * 5, LABEL_DISPLACEMENT);
+                text_layer.noStroke();
+                text_layer.textSize(30);
+                const x = text_layer.width / 2 + o.start_x - main_layer.textWidth(o.name) / 2;
+                const y = ORIGIN_Y + o.offset_y + o.start_y;
+                text_layer.text(o.name, x, y);
                 o.text_drawn = true;
-                links.push({name: o.name, url: o.url, x: width / 2 + o.start_x, y: o.start_y + 500})
+                links.push({name: o.name, url: o.url, x: width / 2 + o.start_x, y: o.start_y + ORIGIN_Y, offset_y: o.offset_y})
             }
             //rotate(o.rotate);
-            main_layer.stroke(0, 0, 0, o.opacity);
-            //main_layer.stroke(o.hue + (255 - o.saturation), (255 - o.hue) + (255 - o.saturation), 255 - o.saturation, o.opacity);
+            if (COLORFUL) {
+                main_layer.stroke(o.hue + (255 - o.saturation), (255 - o.hue) + (255 - o.saturation), 255 - o.saturation, o.opacity);
+            } else {
+                main_layer.stroke(0, 0, 0, o.opacity);
+            }
             o.hue = clamp(o.hue + rand2(10) + 0.06, 50, 180);
             o.saturation = clamp(o.saturation + rand2(10) + 0.05, 100, 255);
             if (o.i < points.length && o.opacity > 0) {
@@ -191,11 +213,30 @@ function draw() {
                             step: o.step + 2, clef_step: o.clef_step + 2, depth: o.depth + 1,
                             rotate: o.rotate + spawn_angle.rotate,
                             hue: o.hue, saturation: o.saturation,
-                            text_drawn: false, name: spawn_angle.name,
+                            text_drawn: false, name: spawn_angle.name, offset_y: spawn_angle.offset_y,
                             removed_indices: o.removed_indices//.concat([Math.floor(Math.random() * 6)]),
                         })
                     }
                 })
+
+                BACH.forEach((a) => {
+                    if (o.depth == 0 && abs(o.angle - a.angle) < d_angle * o.step * global_speed / 2) {
+                        text_layer.push()
+                        text_layer.translate(width / 2 + o.start_x, o.start_y + ORIGIN_Y);
+                        text_layer.translate(new_x + o.x, a.y);
+                        if (a.accidental != null) {
+                            const img = a.accidental();
+                            text_layer.imageMode(CENTER);
+                            console.log(img.width, a.scale, img.width * a.scale)
+                            text_layer.image(img, -img.width * a.scale + a.offset_x, a.offset_y, img.width * a.scale, img.height * a.scale);
+                        }
+                        text_layer.textSize(40);
+                        text_layer.text(a.text, -text_layer.textWidth(a.text) / 2, -90 - a.y);
+                        text_layer.rotate(-PI / 8)
+                        text_layer.ellipse(0, 0, 30, 30 * 0.75);
+                        text_layer.pop();
+                    }
+                });
             } else {
                 current.delete(o);
             }
@@ -208,7 +249,7 @@ function draw() {
 
     planets.forEach((o) => {
         planet_layer.push();
-        planet_layer.translate(width / 2 + o.start_x, o.start_y + 500);
+        planet_layer.translate(width / 2 + o.start_x, o.start_y + ORIGIN_Y);
         if (o.i < 0) {
             const p = (o.i + planet_spawn_time) / planet_spawn_time;
             o.rotation = notehead_rotation * p;
@@ -242,10 +283,13 @@ function draw() {
         } else {
             planets.delete(o);
         }
-        planet_layer.stroke(0, 0, 0);
-        //planet_layer.stroke(o.color[0], o.color[1], o.color[2]);
-        planet_layer.fill(0, 0, 0);
-        //planet_layer.fill(o.color[0], o.color[1], o.color[2]);
+        if (COLORFUL) {
+            planet_layer.stroke(o.color[0], o.color[1], o.color[2]);
+            planet_layer.fill(o.color[0], o.color[1], o.color[2]);
+        } else {
+            planet_layer.stroke(0, 0, 0);
+            planet_layer.fill(0, 0, 0);
+        }
         planet_layer.translate(o.x, o.y);
         const stem_h = clamp(o.i / 10, 0, 33);
         //planet_layer.rotate(o.rotate);
@@ -263,9 +307,10 @@ function draw() {
         frame_rate = frameRate();
     }
 
-    //planet_layer.text(frame_rate.toFixed(1) + " FPS", width / 2, 200)
+    planet_layer.text(frame_rate.toFixed(1) + " FPS", width / 2, 200)
     image(main_layer, 0, 0);
     image(planet_layer, 0, 0);
+    image(text_layer, 0, 0);
     image(interactive_layer, 0, 0);
 }
 
