@@ -5,8 +5,7 @@ let canvases;
 function makeCanvas(w, h, z_index) {
     const func = (p) => {
         p.setup = () => {
-            const c = p.createCanvas(w, h).parent("menu");
-            c.position(8, 8);
+            const c = p.createCanvas(w, h).parent("menu").position(0, 0);
             c.style("z-index", z_index);
         }
     }
@@ -21,7 +20,7 @@ function setup() {
     const W = windowWidth;
     const H = 950;
 
-    createCanvas(W, H).parent("menu");
+    createCanvas(W, H).parent("menu").position(0, 0).style("z-index", 0);
     main_layer = this;
     planet_layer = makeCanvas(W, H, 1);
     text_layer = makeCanvas(W, H, 2);
@@ -37,6 +36,7 @@ function setup() {
         console.log("Scale", scale);
         //layer.canvas.style.transform = `scale(${1})`;
     })
+    document.getElementById("menu").height = H;
 }
 
 function interpolate(samples, t) {
