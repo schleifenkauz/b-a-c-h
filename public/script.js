@@ -1,6 +1,10 @@
 let planet_layer, main_layer, interactive_layer, text_layer;
 let natural, flat, kapelle;
 let canvases;
+let mobile;
+
+const W = 950;
+const H = 950;
 
 function makeCanvas(w, h, z_index) {
     const func = (p) => {
@@ -16,9 +20,6 @@ function setup() {
     natural = loadImage("res/natural.png");
     flat = loadImage("res/flat.png");
     kapelle = loadImage("res/sixtinische-kapelle.png");
-
-    const W = windowWidth;
-    const H = 950;
 
     createCanvas(W, H).parent("menu").position(0, 0).style("z-index", 0);
     main_layer = this;
@@ -36,7 +37,17 @@ function setup() {
         console.log("Scale", scale);
         //layer.canvas.style.transform = `scale(${1})`;
     })
-    document.getElementById("menu").height = H;
+
+    mobile = windowWidth < 1200;
+
+    const content = document.getElementById("content");
+    const menu = document.getElementById("menu");
+    if (mobile) {
+        content.style.top = `${H}px`
+    }
+    else {
+        menu.style.left = `${(windowWidth - W) / 2}px`
+    }
 }
 
 function interpolate(samples, t) {
@@ -55,7 +66,26 @@ function interpolate(samples, t) {
     }
 }
 
-async function loadPage(file, elementId='content') {
+let moved_to_right = false;
+
+async function loadPage(file, elementId = 'content') {
+    if (!mobile && !moved_to_right) {
+        const contentSpace = windowWidth - W - 20;
+        content.style.width = `${contentSpace - 0.05 * windowWidth}px`;
+        await menu.animate(
+            [
+                { left: menu.style.left },
+                { left: `${contentSpace}px` }
+            ],
+            {
+                duration: 1000,
+                easing: "ease",
+                fill: "forwards"
+            }
+        ).finished;
+        moved_to_right = true;
+    }
+
     const response = await fetch(file);
     const html = await response.text();
     document.getElementById(elementId).innerHTML = html;
@@ -186,7 +216,7 @@ function mousePressed() {
     links.forEach((link) => {
         const d = dist(link.x, link.y, mouseX, mouseY);
         if (d < link.radius / 2) {
-            openPage(link);   
+            openPage(link);
         }
     })
 }
@@ -195,9 +225,9 @@ async function openPage(link) {
     await loadPage(link.url);
     links.forEach(link => link.current = false);
     link.current = true;
-    window.scrollBy({top: 500, behavior: "smooth"})
+    // window.scrollBy({ top: 500, behavior: "smooth" })
     mouseMoved();
-} 
+}
 
 let background_drawn = false;
 
@@ -207,7 +237,7 @@ function loadWelcome() {
     mouseMoved();
 }
 
-loadWelcome();
+//loadWelcome();
 
 
 function draw() {
@@ -230,7 +260,7 @@ function draw() {
     }
     const content = document.getElementById("content");
     content.style.opacity = clamp(t / 1000, 0, 1);
-    
+
     if (t >= planet_spawn_time) {
         current.forEach((o) => {
             main_layer.push();
@@ -370,7 +400,7 @@ function draw() {
             p.rotate += PI / 48;
             p.angle += d_angle * planet_speed * global_speed;
             p.radius += d_radius * planet_speed * global_speed / ((p.radius + 1) ** p.radius_pow);
-            p.opacity -= 0.35 * planet_speed * global_speed * p.scale; 
+            p.opacity -= 0.35 * planet_speed * global_speed * p.scale;
             //o.step -= 0.003;
             p.x = p.radius * cos(p.angle) + (clef_dx * p.scale);
             p.y = p.radius * sin(p.angle) + (clef_dy * p.scale) - p.initial_radius;
