@@ -14,13 +14,41 @@ h1 {
 
 #heading {
     font-family: 'EB Garamond';
-    align-self: start;
+    /* align-self: start;
     padding-left: 20px;
     justify-self: left;
-    z-index: 5;
+    z-index: 5; */
     color: rgb(20, 100, 0);
     opacity: 0.8;
     cursor: default;
+}
+
+#extra-menu {
+    align-self: start;
+    z-index: 5;
+}
+
+#extra-menu {
+    justify-self: left;
+    padding-left: 10px;
+    display: flex;
+    align-items: baseline;
+}
+
+#extra-menu ul {
+    display: flex;
+    gap: 20px;
+}
+
+#extra-menu a {
+    color: green;
+    text-decoration: underline;
+    cursor: default;
+    font-size: 20px;
+}
+
+#extra-menu a:hover {
+    opacity: 0.8;
 }
 
 #heading:hover {
@@ -29,9 +57,11 @@ h1 {
 
 .stack {
     display: grid;
-    place-items: center; /* Centers all children */
+    place-items: center;
+    /* Centers all children */
 }
 
-.stack > * {
-    grid-area: 1 / 1; /* Put every child in the same grid cell */
+.stack>* {
+    grid-area: 1 / 1;
+    /* Put every child in the same grid cell */
 }
