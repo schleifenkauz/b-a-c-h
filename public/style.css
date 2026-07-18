@@ -2,3 +2,36 @@
     display: flex;
     justify-content: center;
 } */
+
+#content {
+    font-family: 'EB Garamond';
+    opacity: 0;
+}
+
+h1 {
+    text-align: center;
+}
+
+#heading {
+    font-family: 'EB Garamond';
+    align-self: start;
+    padding-left: 20px;
+    justify-self: left;
+    z-index: 5;
+    color: rgb(20, 100, 0);
+    opacity: 0.8;
+    cursor: default;
+}
+
+#heading:hover {
+    opacity: 0.5;
+}
+
+.stack {
+    display: grid;
+    place-items: center; /* Centers all children */
+}
+
+.stack > * {
+    grid-area: 1 / 1; /* Put every child in the same grid cell */
+}
